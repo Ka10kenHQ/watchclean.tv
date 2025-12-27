@@ -1,13 +1,6 @@
 # AD Free English Movie and TV series Center
 
-<div style="
-  border-left: 5px solid #f1c40f;
-  padding: 10px 14px;
-  margin: 12px 0;
-  background-color: rgba(241, 196, 15, 0.1);
-">
-  <strong>Note:</strong> Always use the stable version available on the <b>main</b> branch.
-</div>
+> Always use the stable version available on the <b>main</b> branch.
 
 **Landing page**  
 ![landing page](./images/landing.jpg)  
