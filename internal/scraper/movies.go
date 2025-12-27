@@ -2,7 +2,6 @@ package scraper
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"regexp"
@@ -10,26 +9,14 @@ import (
 	"time"
 
 	"github.com/Ka10ken1/mykadri-scraper/internal/models"
+	"github.com/Ka10ken1/mykadri-scraper/internal/proxy"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
 )
 
 type Movie = models.Movie
 
-type ScrapedMovieInfo struct {
-    VideoURL     string
-    TitleEnglish string
-}
-
-type Status int
-
-const (
-	Scraped Status = iota
-	NeedsTobeScraped
-)
-
-
-func ScrapeMovies(client *http.Client) ([]Movie, error) {
+func ScrapeMovies(pc *proxy.ProxyClient) ([]Movie, error) {
 	alreadyScraped, err := models.HasMovies()
 	if err != nil {
 		return nil, fmt.Errorf("db check error: %w", err)
@@ -49,7 +36,7 @@ func ScrapeMovies(client *http.Client) ([]Movie, error) {
 		seen[link] = struct{}{}
 	}
 
-	c := setupCollector(client)
+	c := setupCollector(pc)
 
 	var mu sync.Mutex
 	var movies []Movie
@@ -58,7 +45,7 @@ func ScrapeMovies(client *http.Client) ([]Movie, error) {
 		movie := parseMovie(e)
 		log.Printf("Found movie: %s (%s)", movie.Title, movie.Year)
 
-		videoURL, err := scrapeMovieVideoURL(client, movie.Link)
+		videoURL, err := scrapeMovieVideoURL(pc, movie.Link)
 
 		if err != nil || videoURL == "" {
 			log.Printf("Warning: could not get video URL for %s: %v", movie.Title, err)
@@ -98,26 +85,23 @@ func ScrapeMovies(client *http.Client) ([]Movie, error) {
 	})
 
 
-	err = c.Limit(&colly.LimitRule{
+	err = c.Limit(&colly.LimitRule {
 		DomainGlob:  "mykadri.tv",
-		Parallelism: 1,
-		Delay:       2 * time.Second,
-		RandomDelay: 500 * time.Microsecond,
+		Parallelism: MovieParallelism,
+		Delay:       RequestDelay,
+		RandomDelay: RandomDelay,
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	
-
 	baseURL := "https://mykadri.tv/filmebi_qartulad/page/%d/"
-	maxPages := 332
 	
 	var wg sync.WaitGroup
-	sema := make(chan struct{}, 2)
+	sema := make(chan struct{}, MovieParallelism)
 
-	for i := 1; i <= maxPages; i++ {
+	for i := 1; i <= MaxMoviePages; i++ {
 		sema <- struct{}{}
 		wg.Add(1)
 
@@ -137,15 +121,19 @@ func ScrapeMovies(client *http.Client) ([]Movie, error) {
 	c.Wait()
 
 	return movies, nil
-
 }
 
-
-func setupCollector(client *http.Client) *colly.Collector {
+func setupCollector(pc *proxy.ProxyClient) *colly.Collector {
 	c := colly.NewCollector(
 		colly.AllowedDomains("mykadri.tv", "www.mykadri.tv"),
 		colly.Async(true),
 	)
+
+	client, _, err := pc.Get()
+	if err != nil {
+		log.Println("No proxy available, using default client")
+		client = &http.Client{Timeout: 15 * time.Second}
+	}
 
 	c.SetClient(client)
 
@@ -193,31 +181,19 @@ func parseMovie(e *colly.HTMLElement) Movie {
 	}
 }
 
-func scrapeMovieVideoURL(client *http.Client, moviePageURL string) (string, error) {
+func scrapeMovieVideoURL(pc *proxy.ProxyClient, moviePageURL string) (string, error) {
+	_, p, _ := pc.Get()
 
-	resp, err := client.Get(moviePageURL)
+	html, err := FetchWithBrowser(moviePageURL, p.Addr)
 	if err != nil {
-		return "", fmt.Errorf("failed to GET page: %w", err)
+		return "", err
 	}
-	defer resp.Body.Close()
-
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("bad status code: %d", resp.StatusCode)
-	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read body: %w", err)
-	}
-	body := string(bodyBytes)
 
 	re := regexp.MustCompile(`data-lazy="(https://vidsrc\.me/embed/movie\?imdb=tt\d+)"`)
-	matches := re.FindStringSubmatch(body)
+	matches := re.FindStringSubmatch(html)
 	if len(matches) < 2 {
-		return "", fmt.Errorf("video URL not found in HTML")
+		return "", fmt.Errorf("video URL not found")
 	}
-	url := matches[1]
-	return url, nil
 
+	return matches[1], nil
 }

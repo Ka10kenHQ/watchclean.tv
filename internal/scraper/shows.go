@@ -2,21 +2,18 @@ package scraper
 
 import (
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"regexp"
 	"sync"
-	"time"
 
 	"github.com/Ka10ken1/mykadri-scraper/internal/models"
+	"github.com/Ka10ken1/mykadri-scraper/internal/proxy"
 	"github.com/gocolly/colly/v2"
 )
 
-
 type Show = models.Show
 
-func ScrapeShows(client *http.Client) ([]Show, error) {
+func ScrapeShows(pc *proxy.ProxyClient) ([]Show, error) {
 	alreadyScraped, err := models.HasShows()
 	if err != nil {
 		return nil, fmt.Errorf("db check error: %w", err)
@@ -36,7 +33,7 @@ func ScrapeShows(client *http.Client) ([]Show, error) {
 		seen[link] = struct{}{}
 	}
 
-	c := setupCollector(client)
+	c := setupCollector(pc)
 
 	var mu sync.Mutex
 	var shows []Show
@@ -45,7 +42,7 @@ func ScrapeShows(client *http.Client) ([]Show, error) {
 		show := parseShow(e)
 		log.Printf("Found show: %s (%s)", show.Title, show.Year)
 
-		videoURL, err := scrapeShowVideoURL(client, show.Link)
+		videoURL, err := scrapeShowVideoURL(pc, show.Link)
 		if err != nil || videoURL == "" {
 			log.Printf("Warning: could not get video URL for %s: %v", show.Title, err)
 			return
@@ -77,21 +74,20 @@ func ScrapeShows(client *http.Client) ([]Show, error) {
 
 	err = c.Limit(&colly.LimitRule{
 		DomainGlob:  "mykadri.tv",
-		Parallelism: 1,
-		Delay:       2 * time.Second,
-		RandomDelay: 500 * time.Microsecond,
+		Parallelism: ShowParallelism,
+		Delay:       RequestDelay,
+		RandomDelay: RandomDelay,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	baseURL := "https://mykadri.tv/serialebi_qartulad/page/%d/"
-	maxPages := 38
 
 	var wg sync.WaitGroup
-	sema := make(chan struct{}, 1)
+	sema := make(chan struct{}, ShowParallelism)
 
-	for i := 1; i <= maxPages; i++ {
+	for i := 1; i <= MaxShowPages; i++ {
 		wg.Add(1)
 		sema <- struct{}{}
 
@@ -144,29 +140,19 @@ func parseShow(e *colly.HTMLElement) Show {
 	}
 }
 
-func scrapeShowVideoURL(client *http.Client, showPageURL string) (string, error) {
-	resp, err := client.Get(showPageURL)
-	if err != nil {
-		return "", fmt.Errorf("failed to GET page: %w", err)
-	}
-	defer resp.Body.Close()
+func scrapeShowVideoURL(pc *proxy.ProxyClient, showPageURL string) (string, error) {
+    _, p, _ := pc.Get()
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("bad status code: %d", resp.StatusCode)
-	}
+    html, err := FetchWithBrowser(showPageURL, p.Addr)
+    if err != nil {
+        return "", err
+    }
 
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read body: %w", err)
-	}
-	body := string(bodyBytes)
-
-	re := regexp.MustCompile(`data-lazy="(https://vidsrc\.me/embed/tv\?imdb=tt\d+)"`)
-	matches := re.FindStringSubmatch(body)
-	if len(matches) < 2 {
-		return "", fmt.Errorf("video URL not found in HTML")
-	}
-
-	return matches[1], nil
+    re := regexp.MustCompile(`data-lazy="(https://vidsrc\.me/embed/tv\?imdb=tt\d+)"`)
+    matches := re.FindStringSubmatch(html)
+    if len(matches) < 2 {
+        return "", fmt.Errorf("video URL not found")
+    }
+    return matches[1], nil
 }
 

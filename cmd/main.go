@@ -1,49 +1,37 @@
 package main
 
 import (
-	"context"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"time"
 
 	"github.com/Ka10ken1/mykadri-scraper/internal/api"
 	"github.com/Ka10ken1/mykadri-scraper/internal/models"
+	"github.com/Ka10ken1/mykadri-scraper/internal/proxy"
 	"github.com/Ka10ken1/mykadri-scraper/internal/scraper"
 	"github.com/joho/godotenv"
 )
 
-func createHTTPClientWithCustomDNS() *http.Client {
-    resolver := &net.Resolver{
-        PreferGo: true,
-        Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-            d := net.Dialer{
-                Timeout: time.Second * 2,
-            }
-            return d.DialContext(ctx, network, "1.1.1.1:53")
-        },
-    }
 
-    dialer := &net.Dialer{
-        Resolver: resolver,
-        Timeout:  5 * time.Second,
-    }
+func initProxyPool() *proxy.ProxyClient {
+    // free proxy servers
+    // replaces with what you like
+    // or you can create custom proxy
+    pool := proxy.NewPool([]string {
+	"http://127.0.0.1:5018",
+    })
 
-    transport := &http.Transport{
-        DialContext: dialer.DialContext,
-    }
-
-    return &http.Client{
-        Transport: transport,
-        Timeout:   10 * time.Second,
-    }
+    return proxy.NewProxyClient(pool)
 }
-
 
 func main() {
 
-    client := createHTTPClientWithCustomDNS()
+    go func ()  {
+	proxy.NewServer("127.0.0.1:5018").Start()
+    }()
+    time.Sleep(2 * time.Second)
+
+    proxyClient := initProxyPool()
 
     if err := godotenv.Load(); err != nil {
 	log.Println("No .env file found, using default env vars")
@@ -66,20 +54,22 @@ func main() {
 	log.Fatalf("Failed to create text index: %v", err)
     }
 
-    movies, err := scraper.ScrapeMovies(client)
+    movies, err := scraper.ScrapeMovies(proxyClient)
     if err != nil {
 	log.Fatal(err)
     }
 
     if len(movies) > 0 {
+
 	if err := models.InsertMovies(movies); err != nil {
 	    log.Fatal(err)
 	}
+
     } else {
 	log.Println("No new movies to insert, skipping DB insert.")
     }
 
-    shows, err := scraper.ScrapeShows(client)
+    shows, err := scraper.ScrapeShows(proxyClient)
     if err != nil {
 	log.Fatal("Show scrape failed:", err)
     }
@@ -90,7 +80,6 @@ func main() {
     } else {
 	log.Println("No new shows to insert.")
     }
-
 
     api.RunServer()
 
