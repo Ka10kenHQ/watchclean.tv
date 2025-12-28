@@ -62,5 +62,6 @@ docker compose down -v
 
 
 ### Todo
+- Remove Colly and use Chromedp browser
 - Integrate full text search engine
 - Perfect Scraper
