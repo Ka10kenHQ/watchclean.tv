@@ -13,12 +13,23 @@ import (
 )
 
 type Show struct {
-	Title        string `bson:"title"`
-	TitleEnglish string `bson:"titleEnglish"`
-	Year         string `bson:"year"`
-	Link         string `bson:"link"`
-	Image        string `bson:"image"`
-	VideoURL     string `bson:"videoUrl"`
+	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	Title        string             `bson:"title"`
+	TitleEnglish string             `bson:"titleEnglish"`
+	ImdbID       string             `bson:"imdb"`
+	TmdbID       string             `bson:"tmdb"`
+	Year         string             `bson:"year"`
+	Image        string             `bson:"image"`
+	VideoURL     string             `bson:"videoUrl"`
+}
+
+type Episode struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	ShowImdb string             `bson:"showImdb"`
+	Season   int                `bson:"season"`
+	Episode  int                `bson:"episode"`
+	Title    string             `bson:"title"`
+	Image    string             `bson:"image"`
 }
 
 type ShowImage struct {
@@ -28,22 +39,49 @@ type ShowImage struct {
 	Image        string             `bson:"image" json:"image"`
 }
 
-var showCollection *mongo.Collection
+var (
+	showCollection    *mongo.Collection
+	episodeCollection *mongo.Collection
+)
 
-func InitShowMongo(uri, dbName, collectionName string) error {
+func InitShowMongo(uri, dbName string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	clientOpts := options.Client().ApplyURI(uri)
-	client, err := mongo.Connect(ctx, clientOpts)
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		return err
 	}
 
-	log.Println("MongoDB Connected for shows")
-	showCollection = client.Database(dbName).Collection(collectionName)
-	return nil
+	db := client.Database(dbName)
+	showCollection = db.Collection("shows")
+	episodeCollection = db.Collection("episodes")
+
+	log.Println("MongoDB connected (shows, episodes)")
+
+	return ensureShowIndexes(ctx)
 }
+
+func ensureShowIndexes(ctx context.Context) error {
+	indexes := []mongo.IndexModel{
+		{
+			Keys: bson.D{{Key: "imdb", Value: 1}},
+			Options: options.Index().
+				SetUnique(true),
+		},
+		{
+			Keys: bson.D{
+				{Key: "title", Value: "text"},
+				{Key: "titleEnglish", Value: "text"},
+			},
+		},
+	}
+
+	_, err := showCollection.Indexes().CreateMany(ctx, indexes)
+	return err
+}
+
+/* -------------------- SHOWS -------------------- */
 
 func InsertShows(shows []Show) error {
 	if showCollection == nil {
@@ -53,17 +91,38 @@ func InsertShows(shows []Show) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	var docs []any
+	docs := make([]any, 0, len(shows))
 	for _, s := range shows {
-		log.Printf("Inserting show: %+v\n", s)
 		docs = append(docs, s)
 	}
 
-	_, err := showCollection.InsertMany(ctx, docs)
+	_, err := showCollection.InsertMany(ctx, docs, options.InsertMany().SetOrdered(false))
 	return err
 }
 
 func GetAllShows() ([]Show, error) {
+	return findShows(bson.M{})
+}
+
+func GetShowByID(id string) (*Show, error) {
+	if showCollection == nil {
+		return nil, mongo.ErrClientDisconnected
+	}
+
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var show Show
+	err = showCollection.FindOne(ctx, bson.M{"_id": oid}).Decode(&show)
+	return &show, err
+}
+
+func GetAllShowImages() ([]ShowImage, error) {
 	if showCollection == nil {
 		return nil, mongo.ErrClientDisconnected
 	}
@@ -71,7 +130,76 @@ func GetAllShows() ([]Show, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	cursor, err := showCollection.Find(ctx, bson.M{})
+	opts := options.Find().SetProjection(bson.M{
+		"title":        1,
+		"titleEnglish": 1,
+		"image":        1,
+	})
+
+	cursor, err := showCollection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var images []ShowImage
+	for cursor.Next(ctx) {
+		var img ShowImage
+		if err := cursor.Decode(&img); err != nil {
+			return nil, err
+		}
+		images = append(images, img)
+	}
+
+	return images, nil
+}
+
+func SearchShowsByTitle(query string) ([]Show, error) {
+	safe := regexp.QuoteMeta(query)
+
+	filter := bson.M{
+		"$or": []bson.M{
+			{"title": bson.M{"$regex": safe, "$options": "i"}},
+			{"titleEnglish": bson.M{"$regex": safe, "$options": "i"}},
+		},
+	}
+
+	return findShows(filter)
+}
+
+func HasShows() (bool, error) {
+	if showCollection == nil {
+		return false, mongo.ErrClientDisconnected
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	count, err := showCollection.CountDocuments(ctx, bson.D{})
+	return count > 0, err
+}
+
+func ClearShowsCollection() error {
+	if showCollection == nil {
+		return mongo.ErrClientDisconnected
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := showCollection.DeleteMany(ctx, bson.M{})
+	return err
+}
+
+func findShows(filter bson.M) ([]Show, error) {
+	if showCollection == nil {
+		return nil, mongo.ErrClientDisconnected
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cursor, err := showCollection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -89,89 +217,27 @@ func GetAllShows() ([]Show, error) {
 	return shows, nil
 }
 
-func GetAllShowImages() ([]ShowImage, error) {
+func GetShowByTmdbID(tmdbID string) (*Show, error) {
 	if showCollection == nil {
 		return nil, mongo.ErrClientDisconnected
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	opts := options.Find().SetProjection(bson.M{
-		"image":        1,
-		"title":        1,
-		"titleEnglish": 1,
-	})
-
-	cursor, err := showCollection.Find(ctx, bson.M{}, opts)
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var images []ShowImage
-	for cursor.Next(ctx) {
-		var si ShowImage
-		if err := cursor.Decode(&si); err != nil {
-			return nil, err
-		}
-		images = append(images, si)
-	}
-
-	return images, nil
-}
-
-func GetShowByID(idStr string) (*Show, error) {
-	if showCollection == nil {
-		return nil, mongo.ErrClientDisconnected
-	}
-
-	id, err := primitive.ObjectIDFromHex(idStr)
-	if err != nil {
-		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var show Show
-	err = showCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&show)
+	err := showCollection.FindOne(ctx, bson.M{"tmdb": tmdbID}).Decode(&show)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
 		return nil, err
 	}
 
 	return &show, nil
 }
 
-func GetAllShowLinks() ([]string, error) {
-	if showCollection == nil {
-		return nil, mongo.ErrClientDisconnected
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	cursor, err := showCollection.Find(ctx, bson.M{}, options.Find().SetProjection(bson.M{"link": 1}))
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var links []string
-	for cursor.Next(ctx) {
-		var s struct {
-			Link string `bson:"link"`
-		}
-		if err := cursor.Decode(&s); err != nil {
-			return nil, err
-		}
-		links = append(links, s.Link)
-	}
-
-	return links, nil
-}
-
-func ClearShowsCollection() error {
+func InsertShow(show Show) error {
 	if showCollection == nil {
 		return mongo.ErrClientDisconnected
 	}
@@ -179,26 +245,11 @@ func ClearShowsCollection() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_, err := showCollection.DeleteMany(ctx, bson.M{})
+	_, err := showCollection.InsertOne(ctx, show)
 	return err
 }
 
-func HasShows() (bool, error) {
-	if showCollection == nil {
-		return false, mongo.ErrClientDisconnected
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	count, err := showCollection.CountDocuments(ctx, bson.D{})
-	if err != nil {
-		return false, err
-	}
-	return count > 0, nil
-}
-
-func SearchShowsByTitle(query string) ([]Show, error) {
+func GetAllShowImdbIds() ([]string, error) {
 	if showCollection == nil {
 		return nil, mongo.ErrClientDisconnected
 	}
@@ -206,30 +257,22 @@ func SearchShowsByTitle(query string) ([]Show, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	safeQuery := regexp.QuoteMeta(query)
-
-	filter := bson.M{
-		"$or": []bson.M{
-			{"title": bson.M{"$regex": safeQuery, "$options": "i"}},
-			{"titleEnglish": bson.M{"$regex": safeQuery, "$options": "i"}},
-		},
-	}
-
-	cursor, err := showCollection.Find(ctx, filter)
+	cursor, err := showCollection.Find(ctx, bson.M{}, options.Find().SetProjection(bson.M{"imdb": 1}))
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(ctx)
 
-	var results []Show
+	var ids []string
 	for cursor.Next(ctx) {
-		var s Show
+		var s struct {
+			ImdbID string `bson:"imdb"`
+		}
 		if err := cursor.Decode(&s); err != nil {
 			return nil, err
 		}
-		results = append(results, s)
+		ids = append(ids, s.ImdbID)
 	}
 
-	return results, nil
+	return ids, nil
 }
-

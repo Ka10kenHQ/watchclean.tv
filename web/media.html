@@ -2,238 +2,133 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Media Center</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WatchClean</title>
+    <link rel="stylesheet" href="/static/style.css" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      :root {
-        --bg-primary: #0a0a0b;
-        --bg-secondary: #141419;
-        --bg-tertiary: #1a1a23;
-        --bg-card: #1e1e2a;
-        --bg-hover: #252532;
-        --accent-primary: #6366f1;
-        --accent-secondary: #8b5cf6;
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --text-muted: #64748b;
-        --border: #2d2d3a;
-        --border-hover: #3d3d4a;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --shadow:
-          0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-        --shadow-lg:
-          0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-        --gradient: linear-gradient(
-          135deg,
-          var(--accent-primary),
-          var(--accent-secondary)
-        );
-      }
-
-      body {
-        font-family:
-          "Inter",
-          -apple-system,
-          BlinkMacSystemFont,
-          sans-serif;
-        background: linear-gradient(
-          135deg,
-          var(--bg-primary) 0%,
-          var(--bg-secondary) 100%
-        );
-        color: var(--text-primary);
-        min-height: 100vh;
-        padding: 2rem;
-        overflow-x: hidden;
-      }
-
-      .terminal-window {
-        max-width: 1400px;
-        margin: 0 auto;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: var(--shadow-lg);
-      }
-
-      .terminal-header {
-        background: rgba(30, 30, 42, 0.8);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid var(--border);
-        padding: 1.5rem 2rem;
+      /* Page-specific overrides for the landing page */
+      .landing-hero {
+        height: 60vh;
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .terminal-dots {
-        display: flex;
-        gap: 0.5rem;
-      }
-
-      .terminal-dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-      }
-
-      .terminal-dot.red {
-        background: #f43f5e;
-      }
-      .terminal-dot.yellow {
-        background: #f59e0b;
-      }
-      .terminal-dot.green {
-        background: #10b981;
-      }
-
-      .terminal-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        background: var(--gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-
-      .terminal-content {
-        padding: 3rem;
-      }
-
-      .status-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: var(--bg-tertiary);
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        font-size: 1rem;
-        color: var(--text-secondary);
-        font-family: "SF Mono", "Monaco", monospace;
-        margin-bottom: 2rem;
-      }
-
-      .status-bar span:first-child {
-        color: var(--success);
-      }
-
-      .status-bar span:last-child {
-        color: var(--text-muted);
-      }
-
-      .movie-grid {
-        display: flex;
+        flex-direction: column;
         justify-content: center;
-        gap: 2rem;
-        margin-top: 2rem;
+        align-items: center;
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+      }
+      
+      .landing-title {
+        font-size: 5rem;
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+      }
+      
+      .landing-desc {
+        color: var(--text-muted);
+        font-size: 1.25rem;
+        max-width: 600px;
       }
 
-      .movie-item {
-        background: var(--bg-card);
+      .selection-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: var(--border);
         border: 1px solid var(--border);
-        border-radius: 12px;
-        overflow: hidden;
+        margin-top: -1px;
+      }
+
+      .selection-item {
+        background: var(--bg-primary);
+        padding: 6rem 2rem;
         text-align: center;
         text-decoration: none;
         transition: all 0.3s ease;
-        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
       }
 
-      .movie-item:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--border-hover);
+      .selection-item:hover {
+        background: var(--bg-secondary);
       }
 
-      .movie-poster {
+      .selection-item img {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
-        height: 400px; /* Larger posters */
+        height: 100%;
         object-fit: cover;
-        transition: transform 0.3s ease;
+        opacity: 0.2;
+        transition: opacity 0.3s ease;
+        z-index: 0;
       }
 
-      .movie-item:hover .movie-poster {
-        transform: scale(1.05);
+      .selection-item:hover img {
+        opacity: 0.4;
       }
 
-      .movie-title {
-        font-size: 2rem; /* Bold, prominent titles */
-        font-weight: 700;
+      .selection-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .selection-name {
+        font-size: 2.5rem;
+        font-weight: 800;
+        text-transform: uppercase;
         color: var(--text-primary);
-        margin: 1rem;
-        line-height: 1.2;
-        background: var(--gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .selection-tag {
+        font-size: 0.85rem;
+        color: var(--accent-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
       }
 
       @media (max-width: 768px) {
-        body {
-          padding: 1rem;
-        }
-
-        .terminal-content {
-          padding: 1.5rem;
-        }
-
-        .movie-grid {
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        }
-
-        .movie-poster {
-          height: 300px;
-        }
-
-        .movie-title {
-          font-size: 1.5rem;
-        }
-
-        .status-bar {
-          font-size: 0.9rem;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
+        .landing-title { font-size: 3rem; }
+        .selection-grid { grid-template-columns: 1fr; }
+        .selection-item { padding: 4rem 1rem; }
       }
     </style>
   </head>
   <body>
-    <div class="terminal-window">
-      <div class="terminal-header">
-        <div class="terminal-dots">
-          <div class="terminal-dot red"></div>
-          <div class="terminal-dot yellow"></div>
-          <div class="terminal-dot green"></div>
-        </div>
-        <span class="terminal-title">Media Center v1.0.0</span>
+    <div class="app-container">
+      <div class="landing-hero">
+        <h1 class="landing-title">WatchClean</h1>
+        <p class="landing-desc">A simple, clean interface for your favorite movies and shows.</p>
       </div>
 
-      <div class="terminal-content">
-        <div class="status-bar">
-          <span>STATUS: READY</span>
-          <span>SELECT: MOVIES or SHOWS</span>
+      <div class="selection-grid">
+        <a href="/movies" class="selection-item">
+          <img src="/images/movies.jpg" alt="Movies" />
+          <div class="selection-content">
+            <div class="selection-tag">Collection</div>
+            <div class="selection-name">Movies</div>
+          </div>
+        </a>
+
+        <a href="/shows" class="selection-item">
+          <img src="/images/movie.jpg" alt="Shows" />
+          <div class="selection-content">
+            <div class="selection-tag">Library</div>
+            <div class="selection-name">TV Shows</div>
+          </div>
+        </a>
+      </div>
+      
+      <div class="status-bar">
+        <div class="status-item">
+          <div class="status-dot"></div>
           <span>v1.0.0</span>
         </div>
-
-        <div class="movie-grid">
-          <a href="/movies" class="movie-item">
-            <img src="/images/movies.jpg" class="movie-poster" alt="Movies" />
-            <div class="movie-title">🎬 Movies</div>
-          </a>
-
-          <a href="/shows" class="movie-item">
-            <img src="/images/movie.jpg" class="movie-poster" alt="Shows" />
-            <div class="movie-title">📺 Shows</div>
-          </a>
+        <div class="status-item">
+          <span>Ready</span>
         </div>
       </div>
     </div>

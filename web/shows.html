@@ -3,45 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Movie Center - Shows</title>
+    <title>WatchClean - Shows</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
     <div class="app-container">
       <header class="header">
         <div class="header-content">
-          <div class="logo">
-            <div class="logo-icon">📺</div>
-            <div class="logo-text">Movie Center - Shows</div>
-          </div>
+          <a href="/" class="logo">
+            <div class="logo-icon"></div>
+            <span class="logo-text">WatchClean</span>
+          </a>
           <div class="search-container">
             <div class="search-bar">
-              <div class="search-icon">🔍</div>
               <input
                 type="text"
                 id="searchInput"
                 class="search-input"
-                placeholder="Search for shows, titles, or IDs..."
+                placeholder="Search shows..."
                 autocomplete="off"
               />
               <button id="searchClear" class="search-clear">✕</button>
+              <div class="search-icon">🔍</div>
             </div>
             <div id="searchResults" class="search-results"></div>
           </div>
         </div>
       </header>
 
-      <div class="status-bar"></div>
+      <div class="status-bar">
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span>TV Shows</span>
+        </div>
+      </div>
 
       <main class="main-content">
         <div id="movie-grid" class="movies-grid">
-          <div class="loading">Loading shows...</div>
+          <div class="loading">Fetching shows...</div>
         </div>
 
         <div class="pagination">
-          <button id="prev" class="nav-button">← Previous</button>
-          <div id="page-number" class="page-info">Page 1</div>
-          <button id="next" class="nav-button">Next →</button>
+          <button id="prev" class="nav-button">Prev</button>
+          <div id="page-number" class="page-info">01 / 01</div>
+          <button id="next" class="nav-button">Next</button>
         </div>
       </main>
     </div>

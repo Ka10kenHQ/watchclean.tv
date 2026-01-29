@@ -17,9 +17,11 @@ type Movie struct {
     Title        string `bson:"title"`
     TitleEnglish string `bson:"titleEnglish"`
     Year         string `bson:"year"`
-    Link         string `bson:"link"`     
+    ImdbID       string `bson:"imdbId"`
+    TmdbID       string `bson:"tmdbId"`
     Image        string `bson:"image"`
-    VideoURL     string `bson:"videoUrl"` 
+    VideoURL     string `bson:"videoUrl"`
+    Quality      string `bson:"quality"`
 }
 
 
@@ -158,7 +160,7 @@ func GetMovieByID(idStr string) (*Movie, error) {
     return &movie, nil
 }
 
-func GetAllMovieLinks() ([]string, error) {
+func GetAllMovieImdbIds() ([]string, error) {
     if movieCollection == nil {
 	return nil, mongo.ErrClientDisconnected
     }
@@ -167,24 +169,24 @@ func GetAllMovieLinks() ([]string, error) {
     ctx, cancel := context.WithTimeout(context.Background(), timeOut)
     defer cancel()
 
-    cursor, err := movieCollection.Find(ctx, bson.M{}, options.Find().SetProjection(bson.M{"link": 1}))
+    cursor, err := movieCollection.Find(ctx, bson.M{}, options.Find().SetProjection(bson.M{"imdbId": 1}))
     if err != nil {
 	return nil, err
     }
     defer cursor.Close(ctx)
 
-    var links []string
+    var ids []string
     for cursor.Next(ctx) {
 	var m struct {
-	    Link string `bson:"link"`
+	    ImdbID string `bson:"imdbId"`
 	}
 	if err := cursor.Decode(&m); err != nil {
 	    return nil, err
 	}
-	links = append(links, m.Link)
+	ids = append(ids, m.ImdbID)
     }
 
-    return links, nil
+    return ids, nil
 }
 
 func ClearMoviesCollection() error {
@@ -229,7 +231,7 @@ func RebuildTextIndex() error {
     return err
 }
 
-func SearchMoviesByTitle(query string) ([]Movie, error) {
+func GetMovieByTmdbID(tmdbID string) (*Movie, error) {
     if movieCollection == nil {
 	return nil, mongo.ErrClientDisconnected
     }
@@ -237,12 +239,44 @@ func SearchMoviesByTitle(query string) ([]Movie, error) {
     ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
 
-    safeQuery := regexp.QuoteMeta(query)
+    var movie Movie
+    err := movieCollection.FindOne(ctx, bson.M{"tmdbId": tmdbID}).Decode(&movie)
+    if err != nil {
+	if err == mongo.ErrNoDocuments {
+	    return nil, nil
+	}
+	return nil, err
+    }
+
+    return &movie, nil
+}
+
+func InsertMovie(movie Movie) error {
+    if movieCollection == nil {
+	return mongo.ErrClientDisconnected
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    _, err := movieCollection.InsertOne(ctx, movie)
+    return err
+}
+
+func SearchMoviesByTitle(query string) ([]Movie, error) {
+    if movieCollection == nil {
+	return nil, mongo.ErrClientDisconnected
+    }
+
+    safe := regexp.QuoteMeta(query)
+
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
 
     filter := bson.M{
 	"$or": []bson.M{
-	    {"title": bson.M{"$regex": safeQuery, "$options": "i"}},
-	    {"titleEnglish": bson.M{"$regex": safeQuery, "$options": "i"}},
+	    {"title": bson.M{"$regex": safe, "$options": "i"}},
+	    {"titleEnglish": bson.M{"$regex": safe, "$options": "i"}},
 	},
     }
 
@@ -252,15 +286,14 @@ func SearchMoviesByTitle(query string) ([]Movie, error) {
     }
     defer cursor.Close(ctx)
 
-    var results []Movie
+    var movies []Movie
     for cursor.Next(ctx) {
 	var m Movie
 	if err := cursor.Decode(&m); err != nil {
 	    return nil, err
 	}
-	results = append(results, m)
+	movies = append(movies, m)
     }
 
-    return results, nil
+    return movies, nil
 }
-

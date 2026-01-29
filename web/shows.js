@@ -21,11 +21,14 @@ async function fetchShows() {
 function updateStatusBar(status = "READY") {
   const statusBar = document.querySelector(".status-bar");
   const count = shows.length;
-  const maxPage = Math.ceil(count / pageSize);
   statusBar.innerHTML = `
-      <span>STATUS: ${status}</span>
-      <span>SHOWS: ${count}</span>
-      <span>PAGES: ${maxPage}</span>
+    <div class="status-item">
+      <div class="status-dot"></div>
+      <span>Shows: ${count}</span>
+    </div>
+    <div class="status-item">
+      <span>Status: ${status}</span>
+    </div>
   `;
 }
 
@@ -37,18 +40,20 @@ function renderPage() {
   grid.innerHTML = "";
 
   currentItems.forEach((show) => {
-    const item = document.createElement("div");
+    const item = document.createElement("a");
     item.className = "movie-item";
-
-    const link = document.createElement("a");
-    link.href = `/api/show/${show.id}`;
-    link.style.textDecoration = "none";
-    link.style.color = "inherit";
+    item.href = `/api/show/${show.id}`;
 
     const img = document.createElement("img");
-    img.src = show.image;
+    img.src = show.image || "/images/movie.jpg";
     img.alt = show.Title || show.title || show.id;
     img.className = "movie-poster";
+    img.onerror = function() {
+      this.src = "/images/movie.jpg";
+    };
+
+    const info = document.createElement("div");
+    info.className = "movie-info";
 
     const title = document.createElement("div");
     title.className = "movie-title";
@@ -57,43 +62,26 @@ function renderPage() {
     const englishTitle = document.createElement("div");
     englishTitle.className = "movie-english-title";
     englishTitle.textContent = show.TitleEnglish || show.titleEnglish || "";
+
+    info.appendChild(title);
     if (englishTitle.textContent) {
-      title.style.fontSize = "11px";
-      title.style.marginBottom = "2px";
-      englishTitle.style.color = "#888888";
-      englishTitle.style.fontSize = "10px";
-      englishTitle.style.marginBottom = "4px";
+      info.appendChild(englishTitle);
     }
 
-    const id = document.createElement("div");
-    id.className = "movie-id";
-    id.textContent = `ID: ${show.id}`;
-
-    link.appendChild(img);
-    item.appendChild(link);
-    item.appendChild(title);
-    item.appendChild(englishTitle);
-    item.appendChild(id);
+    item.appendChild(img);
+    item.appendChild(info);
     grid.appendChild(item);
-
-    item.addEventListener("click", (e) => {
-      if (e.target.tagName !== "A" && e.target.tagName !== "IMG") {
-        document
-          .querySelectorAll(".movie-item")
-          .forEach((i) => i.classList.remove("selected"));
-        item.classList.add("selected");
-      }
-    });
   });
 
-  document.getElementById("page-number").textContent = `PAGE ${currentPage}`;
+  const maxPage = Math.ceil(shows.length / pageSize);
+  document.getElementById("page-number").textContent = `${String(currentPage).padStart(2, '0')} / ${String(maxPage || 1).padStart(2, '0')}`;
   updateNavigationButtons();
 }
 
 function updateNavigationButtons() {
   const maxPage = Math.ceil(shows.length / pageSize);
   document.getElementById("prev").disabled = currentPage === 1;
-  document.getElementById("next").disabled = currentPage >= maxPage;
+  document.getElementById("next").disabled = currentPage >= maxPage || maxPage === 0;
 }
 
 function showSearchResults(results, query) {
@@ -103,7 +91,7 @@ function showSearchResults(results, query) {
     return;
   }
   if (results.length === 0) {
-    searchResults.innerHTML = '<div class="no-results">No shows found</div>';
+    searchResults.innerHTML = '<div class="no-results" style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">No shows found</div>';
     searchResults.classList.add("show");
     return;
   }
@@ -111,15 +99,13 @@ function showSearchResults(results, query) {
   searchResults.innerHTML = limited
     .map(
       (show, idx) => `
-    <div class="search-result-item" data-index="${idx}" data-show-id="${show.id}">
-      <img src="${show.image}" alt="${show.Title || show.title}" class="search-result-poster" />
-      <div class="search-result-info">
-        <div class="search-result-title">${show.Title || show.title}
-          ${show.TitleEnglish ? `<span style="color:#666; font-size:10px;">(${show.TitleEnglish})</span>` : ""}
-        </div>
-        <div class="search-result-id">ID: ${show.id}</div>
-      </div>
-    </div>`,
+<div class="search-result-item" data-index="${idx}" data-show-id="${show.id}">
+  <img src="${show.image}" alt="${show.Title || show.title}" class="search-result-poster" />
+  <div class="search-result-info">
+    <div class="search-result-title">${show.Title || show.title}</div>
+    <div class="search-result-id">${show.TitleEnglish || show.id}</div>
+  </div>
+</div>`,
     )
     .join("");
   searchResults.classList.add("show");
@@ -128,7 +114,9 @@ function showSearchResults(results, query) {
 
 function hideSearchResults() {
   const searchResults = document.getElementById("searchResults");
-  searchResults.classList.remove("show");
+  if (searchResults) {
+    searchResults.classList.remove("show");
+  }
   highlightedIndex = -1;
 }
 
@@ -147,6 +135,9 @@ function selectSearchResult(showId) {
     renderPage();
     document.getElementById("searchInput").value = show.Title || show.title;
     hideSearchResults();
+  } else {
+    // If not in local list, redirect to the show page
+    window.location.href = `/api/show/${showId}`;
   }
 }
 
@@ -180,22 +171,16 @@ async function performSearch(query) {
         TitleEnglish: m.titleEnglish || m.TitleEnglish || "",
         image: m.image || m.Image || "",
       }));
-      shows = apiResults;
-      currentPage = 1;
-      updateStatusBar("SEARCH (API)");
-      renderPage();
-    } else {
-      shows = localResults;
-      currentPage = 1;
-      updateStatusBar("SEARCH (local fallback)");
-      renderPage();
+      
+      // Merge with local results, avoiding duplicates
+      const resultIds = new Set(localResults.map(m => m.id));
+      const filteredApiResults = apiResults.filter(m => !resultIds.has(m.id));
+      const combinedResults = [...localResults, ...filteredApiResults];
+      
+      showSearchResults(combinedResults, query);
     }
   } catch (err) {
     console.error("API search error:", err);
-    shows = localResults;
-    currentPage = 1;
-    updateStatusBar("SEARCH (local fallback)");
-    renderPage();
   }
 }
 
@@ -213,45 +198,65 @@ document.getElementById("prev").addEventListener("click", () => {
   if (currentPage > 1) {
     currentPage--;
     renderPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 });
+
 document.getElementById("next").addEventListener("click", () => {
   if (currentPage < Math.ceil(shows.length / pageSize)) {
     currentPage++;
     renderPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 });
+
 const searchInput = document.getElementById("searchInput");
-searchInput.addEventListener("input", (e) => debouncedSearch(e.target.value));
-searchInput.addEventListener("keydown", (e) => {
-  const items = document.querySelectorAll(".search-result-item");
-  switch (e.key) {
-    case "ArrowDown":
-      e.preventDefault();
-      if (items.length) {
-        highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
-        highlightResult(highlightedIndex);
-      }
-      break;
-    case "ArrowUp":
-      e.preventDefault();
-      if (items.length) {
-        highlightedIndex = Math.max(highlightedIndex - 1, -1);
-        highlightResult(highlightedIndex);
-      }
-      break;
-    case "Enter":
-      e.preventDefault();
-      if (highlightedIndex >= 0 && items[highlightedIndex]) {
-        selectSearchResult(items[highlightedIndex].dataset.showId);
-      }
-      break;
-    case "Escape":
-      hideSearchResults();
-      searchInput.blur();
-      break;
-  }
-});
+if (searchInput) {
+  searchInput.addEventListener("input", (e) => debouncedSearch(e.target.value));
+  searchInput.addEventListener("keydown", (e) => {
+    const items = document.querySelectorAll(".search-result-item");
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        if (items.length) {
+          highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+          highlightResult(highlightedIndex);
+        }
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        if (items.length) {
+          highlightedIndex = Math.max(highlightedIndex - 1, -1);
+          highlightResult(highlightedIndex);
+        }
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (highlightedIndex >= 0 && items[highlightedIndex]) {
+          selectSearchResult(items[highlightedIndex].dataset.showId);
+        }
+        break;
+      case "Escape":
+        hideSearchResults();
+        searchInput.blur();
+        break;
+    }
+  });
+}
+
+const searchClear = document.getElementById("searchClear");
+if (searchClear) {
+  searchClear.addEventListener("click", () => {
+    searchInput.value = "";
+    performSearch("");
+    searchClear.classList.remove("visible");
+  });
+  
+  searchInput.addEventListener("input", () => {
+    searchClear.classList.toggle("visible", searchInput.value.length > 0);
+  });
+}
+
 document.addEventListener("click", (e) => {
   if (e.target.closest(".search-result-item")) {
     const showId = e.target.closest(".search-result-item").dataset.showId;

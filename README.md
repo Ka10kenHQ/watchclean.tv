@@ -23,9 +23,26 @@ git clone https://github.com/Ka10ken1/mykadri-scraper
 cd mykadri-scraper
 ```
 
+**Start with Docker:**
+
 ```sh
 docker compose up --build
 ```
+
+The application will be available at: http://localhost:8080
+
+> **Note:** The app uses pre-seeded MongoDB data from `mongo-seed/` directory, so no API key is required for basic usage.
+
+**Optional - TMDB API Key:**
+
+If you want to fetch new movies/shows or refresh metadata, create a `.env` file:
+
+```sh
+# .env
+TMDB_API_KEY=your_tmdb_api_key_here
+```
+
+> Get your free TMDB API key from: https://www.themoviedb.org/settings/api
 
 ---
 

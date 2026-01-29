@@ -15,14 +15,17 @@ func RunServer() {
 	r.GET("/api/movie-images", GetMovieImages)
 	r.GET("/api/search", GetMoviesByTitle)
 	r.GET("/api/movie/:id", ShowMoviePage)
+	r.GET("/movies/tmdb/:tmdb_id", ShowMovieByTmdbID)
 
 	r.GET("/api/shows", GetShows)
 	r.GET("/api/shows/:id", GetShowByID)
 	r.GET("/api/shows/images", GetShowImages)
 	r.GET("/api/shows/search", GetShowsByTitle)
 	r.GET("/api/show/:id", ShowShowPage)
+	r.GET("/shows/tmdb/:tmdb_id", ShowShowByTmdbID)
 
 	r.Static("/static", "./web")
+	r.Static("/images", "./images")
 
 	
 	r.GET("/", func(c *gin.Context) {

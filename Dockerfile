@@ -1,4 +1,4 @@
-FROM golang:1.24.5-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -23,4 +23,3 @@ ENV MONGO_DB=mykadri
 ENV MONGO_COLLECTION=movies
 
 CMD ["./scraper"]
-

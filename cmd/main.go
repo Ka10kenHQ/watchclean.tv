@@ -3,36 +3,56 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/Ka10ken1/mykadri-scraper/internal/api"
 	"github.com/Ka10ken1/mykadri-scraper/internal/models"
-	"github.com/Ka10ken1/mykadri-scraper/internal/proxy"
-	"github.com/Ka10ken1/mykadri-scraper/internal/scraper"
+	"github.com/Ka10ken1/mykadri-scraper/internal/movies"
+	"github.com/Ka10ken1/mykadri-scraper/internal/shows"
 	"github.com/joho/godotenv"
 )
 
 
-func initProxyPool() *proxy.ProxyClient {
-    // free proxy servers
-    // replaces with what you like
-    // or you can create custom proxy
-    pool := proxy.NewPool([]string {
-	"http://127.0.0.1:5018",
-    })
+func fetchMovies() {
+	hasMovies, err := models.HasMovies()
+	if err != nil {
+		log.Printf("Warning: Failed to check if movies exist: %v", err)
+	}
+	
+	if hasMovies {
+		log.Println("Movies already exist in database, skipping fetch.")
+		return
+	}
 
-    return proxy.NewProxyClient(pool)
+	log.Println("Fetching movies from Vidsrc API...")
+
+	if err := movies.Fetch(); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("All movies processed and inserted.")
 }
 
-func main() {
+func fetchShows() {
+	hasShows, err := models.HasShows()
+	if err != nil {
+		log.Printf("Warning: Failed to check if shows exist: %v", err)
+	}
+	
+	if hasShows {
+		log.Println("Shows already exist in database, skipping fetch.")
+		return
+	}
 
-    go func ()  {
-	proxy.NewServer("127.0.0.1:5018").Start()
-    }()
-    time.Sleep(2 * time.Second)
+	log.Println("Fetching shows from Vidsrc API...")
 
-    proxyClient := initProxyPool()
+	if err := shows.Fetch(); err != nil {
+		log.Fatal(err)
+	}
 
+	log.Println("All shows processed and inserted.")
+}
+
+func fetchData() {
     if err := godotenv.Load(); err != nil {
 	log.Println("No .env file found, using default env vars")
     }
@@ -45,46 +65,26 @@ func main() {
 	log.Fatal(err)
     }
 
-    if err := models.InitShowMongo(uri, db, "shows"); err != nil {
+    if err := models.InitShowMongo(uri, db); err != nil {
 	log.Fatal(err)
     }
-
 
     if err := models.RebuildTextIndex(); err != nil {
-	log.Fatalf("Failed to create text index: %v", err)
+	log.Printf("Warning: Failed to create text index: %v", err)
     }
 
-    movies, err := scraper.ScrapeMovies(proxyClient)
-    if err != nil {
-	log.Fatal(err)
-    }
-
-    if len(movies) > 0 {
-
-	if err := models.InsertMovies(movies); err != nil {
-	    log.Fatal(err)
-	}
-
-    } else {
-	log.Println("No new movies to insert, skipping DB insert.")
-    }
-
-    shows, err := scraper.ScrapeShows(proxyClient)
-    if err != nil {
-	log.Fatal("Show scrape failed:", err)
-    }
-    if len(shows) > 0 {
-	if err := models.InsertShows(shows); err != nil {
-	    log.Fatal("Show insert failed:", err)
-	}
-    } else {
-	log.Println("No new shows to insert.")
-    }
-
-    api.RunServer()
+    fetchMovies()
+    fetchShows()
 
     // models.ClearMoviesCollection()
     // models.ClearShowsCollection()
+}
 
+func main() {
+
+    fetchData()
+
+    log.Println("Starting API server...")
+    api.RunServer()
 }
 
