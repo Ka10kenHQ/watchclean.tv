@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Ka10ken1/mykadri-scraper/internal/models"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/models"
 	"github.com/gin-gonic/gin"
 )
 

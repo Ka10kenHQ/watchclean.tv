@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Ka10ken1/mykadri-scraper/internal/common"
-	"github.com/Ka10ken1/mykadri-scraper/internal/models"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/common"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/models"
 )
 
 type Movie = models.Movie

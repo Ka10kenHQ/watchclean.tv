@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/Ka10ken1/mykadri-scraper/internal/api"
-	"github.com/Ka10ken1/mykadri-scraper/internal/models"
-	"github.com/Ka10ken1/mykadri-scraper/internal/movies"
-	"github.com/Ka10ken1/mykadri-scraper/internal/shows"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/api"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/models"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/movies"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/shows"
 	"github.com/joho/godotenv"
 )
 

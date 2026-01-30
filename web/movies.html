@@ -39,12 +39,20 @@
       </div>
 
       <main class="main-content">
+        <div class="pagination pagination-top">
+          <button id="prev-top" class="nav-button">Prev</button>
+          <div id="page-numbers-top" class="page-numbers"></div>
+          <div id="page-number-top" class="page-info">01 / 01</div>
+          <button id="next-top" class="nav-button">Next</button>
+        </div>
+
         <div id="movie-grid" class="movies-grid">
           <div class="loading">Fetching movies...</div>
         </div>
 
-        <div class="pagination">
+        <div class="pagination pagination-bottom">
           <button id="prev" class="nav-button">Prev</button>
+          <div id="page-numbers" class="page-numbers"></div>
           <div id="page-number" class="page-info">01 / 01</div>
           <button id="next" class="nav-button">Next</button>
         </div>

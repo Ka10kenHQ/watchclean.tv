@@ -296,20 +296,84 @@ body {
 
 .pagination {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pagination-top {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.pagination-bottom {
   margin-top: 4rem;
-  border-top: 1px solid var(--border);
-  padding-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 40px;
+}
+
+/* Debug: Make sure page numbers container is visible */
+.page-numbers:empty::after {
+  content: '[No pages]';
+  color: red;
+  font-size: 0.8rem;
+}
+
+.page-number {
+  background: var(--bg-card);
+  border: 2px solid var(--border-hover);
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 44px;
+  min-height: 40px;
+  text-align: center;
+  display: inline-block;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.page-number:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.page-number.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: var(--bg-primary);
+  font-weight: 700;
+}
+
+.page-ellipsis {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0 0.5rem;
 }
 
 .nav-button {
-  background: transparent;
-  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border: 2px solid var(--border-hover);
   color: var(--text-primary);
   padding: 0.75rem 1.5rem;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -318,19 +382,24 @@ body {
 
 .nav-button:hover:not(:disabled) {
   border-color: var(--accent-primary);
+  background: var(--bg-hover);
 }
 
 .nav-button:disabled {
-  opacity: 0.2;
+  opacity: 0.3;
   cursor: not-allowed;
+  background: var(--bg-tertiary);
 }
 
 .page-info {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  padding: 0.5rem 1rem;
+  background: var(--bg-card);
+  border: 2px solid var(--border-hover);
 }
 
 .loading {

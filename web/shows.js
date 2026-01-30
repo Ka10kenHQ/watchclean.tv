@@ -74,14 +74,107 @@ function renderPage() {
   });
 
   const maxPage = Math.ceil(shows.length / pageSize);
-  document.getElementById("page-number").textContent = `${String(currentPage).padStart(2, '0')} / ${String(maxPage || 1).padStart(2, '0')}`;
+  const pageText = `${String(currentPage).padStart(2, '0')} / ${String(maxPage || 1).padStart(2, '0')}`;
+  document.getElementById("page-number").textContent = pageText;
+  document.getElementById("page-number-top").textContent = pageText;
+  renderPageNumbers();
   updateNavigationButtons();
+}
+
+function renderPageNumbers() {
+  const maxPage = Math.ceil(shows.length / pageSize) || 1;
+  const pageNumbersContainer = document.getElementById("page-numbers");
+  const pageNumbersContainerTop = document.getElementById("page-numbers-top");
+  
+  if (!pageNumbersContainer || !pageNumbersContainerTop) {
+    console.error('Pagination containers not found!');
+    return;
+  }
+  
+  pageNumbersContainer.innerHTML = "";
+  pageNumbersContainerTop.innerHTML = "";
+
+  // Show at least the current page button even if there's only 1 page
+  if (maxPage <= 1) {
+    addPageNumber(1, pageNumbersContainer);
+    addPageNumber(1, pageNumbersContainerTop);
+    return;
+  }
+
+  const showAround = 2;
+  let startPage = Math.max(1, currentPage - showAround);
+  let endPage = Math.min(maxPage, currentPage + showAround);
+
+  // Render bottom pagination
+  if (startPage > 1) {
+    addPageNumber(1, pageNumbersContainer);
+    if (startPage > 2) {
+      addEllipsis(pageNumbersContainer);
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    addPageNumber(i, pageNumbersContainer);
+  }
+
+  if (endPage < maxPage) {
+    if (endPage < maxPage - 1) {
+      addEllipsis(pageNumbersContainer);
+    }
+    addPageNumber(maxPage, pageNumbersContainer);
+  }
+
+  // Render top pagination (same logic)
+  if (startPage > 1) {
+    addPageNumber(1, pageNumbersContainerTop);
+    if (startPage > 2) {
+      addEllipsis(pageNumbersContainerTop);
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    addPageNumber(i, pageNumbersContainerTop);
+  }
+
+  if (endPage < maxPage) {
+    if (endPage < maxPage - 1) {
+      addEllipsis(pageNumbersContainerTop);
+    }
+    addPageNumber(maxPage, pageNumbersContainerTop);
+  }
+}
+
+function addPageNumber(page, container) {
+  const button = document.createElement("button");
+  button.className = "page-number";
+  if (page === currentPage) {
+    button.classList.add("active");
+  }
+  button.textContent = page;
+  button.onclick = () => {
+    currentPage = page;
+    renderPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  container.appendChild(button);
+}
+
+function addEllipsis(container) {
+  const span = document.createElement("span");
+  span.className = "page-ellipsis";
+  span.textContent = "...";
+  container.appendChild(span);
 }
 
 function updateNavigationButtons() {
   const maxPage = Math.ceil(shows.length / pageSize);
-  document.getElementById("prev").disabled = currentPage === 1;
-  document.getElementById("next").disabled = currentPage >= maxPage || maxPage === 0;
+  const isFirstPage = currentPage === 1;
+  const isLastPage = currentPage >= maxPage || maxPage === 0;
+  
+  document.getElementById("prev").disabled = isFirstPage;
+  document.getElementById("next").disabled = isLastPage;
+  document.getElementById("prev-top").disabled = isFirstPage;
+  document.getElementById("next-top").disabled = isLastPage;
 }
 
 function showSearchResults(results, query) {
@@ -203,6 +296,22 @@ document.getElementById("prev").addEventListener("click", () => {
 });
 
 document.getElementById("next").addEventListener("click", () => {
+  if (currentPage < Math.ceil(shows.length / pageSize)) {
+    currentPage++;
+    renderPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+document.getElementById("prev-top").addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+document.getElementById("next-top").addEventListener("click", () => {
   if (currentPage < Math.ceil(shows.length / pageSize)) {
     currentPage++;
     renderPage();

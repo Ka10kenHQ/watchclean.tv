@@ -1,3 +1,5 @@
+github.com/Ka10ken1/mykadri-scraper v0.0.0-20260129225704-b678db5a3e75 h1:Z6Vvbo1pgmyRjQrv6eQ7fk3AIfWCJ7QgtebqlkEsQH0=
+github.com/Ka10ken1/mykadri-scraper v0.0.0-20260129225704-b678db5a3e75/go.mod h1:SB4z8EkI9UhMdb/5ToiucyQ5VNSrMOx3KGqLaHvAsu8=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=
 github.com/bytedance/sonic v1.11.6/go.mod h1:LysEHSvpvDySVdC2f87zGWf6CIKJcAvqab1ZaiQtds4=
 github.com/bytedance/sonic/loader v0.1.1 h1:c+e5Pt1k/cy5wMveRDyk2X4B9hF4g7an8N3zCYjJFNM=

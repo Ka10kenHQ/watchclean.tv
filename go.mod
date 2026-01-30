@@ -1,8 +1,9 @@
-module github.com/Ka10ken1/mykadri-scraper
+module github.com/Ka10kenHQ/watchclean.tv
 
 go 1.24
 
 require (
+	github.com/Ka10ken1/mykadri-scraper v0.0.0-20260129225704-b678db5a3e75
 	github.com/gin-gonic/gin v1.10.1
 	github.com/joho/godotenv v1.5.1
 	go.mongodb.org/mongo-driver v1.17.4
