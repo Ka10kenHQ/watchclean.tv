@@ -1,0 +1,19 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.single
+    ports:
+      - "8080:8080"
+      - "27017:27017"
+    environment:
+      MONGO_URI: mongodb://localhost:27017
+      MONGO_DB: mykadri
+      MONGO_COLLECTION: movies
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+    volumes:
+      - mongo-data:/data/db
+    restart: on-failure
+
+volumes:
+  mongo-data:
