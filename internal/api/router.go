@@ -2,6 +2,7 @@ package api
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,6 +10,7 @@ import (
 func RunServer() {
 	const port = ":8080"
 	r := gin.Default()
+	r.Use(cacheHeaders())
 
 	r.GET("/api/movies", GetMovies)
 	r.GET("/api/movies/:id", GetMovieByID)
@@ -49,3 +51,26 @@ func RunServer() {
 	}
 }
 
+func cacheHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		path := c.Request.URL.Path
+
+		switch {
+		case strings.HasPrefix(path, "/static/"):
+			// Keep this modest because asset filenames are not content-hashed yet.
+			c.Header("Cache-Control", "public, max-age=3600")
+		case strings.HasPrefix(path, "/images/"):
+			c.Header("Cache-Control", "public, max-age=86400")
+		case path == "/api/movie-images" || path == "/api/shows/images":
+			c.Header("Cache-Control", "public, max-age=600, stale-while-revalidate=300")
+		case path == "/api/search" || path == "/api/shows/search":
+			c.Header("Cache-Control", "public, max-age=60")
+		case strings.HasPrefix(path, "/api/"):
+			c.Header("Cache-Control", "no-store")
+		default:
+			c.Header("Cache-Control", "no-cache")
+		}
+
+		c.Next()
+	}
+}

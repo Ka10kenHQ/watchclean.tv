@@ -3,134 +3,78 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>WatchClean</title>
-    <link rel="stylesheet" href="/static/style.css" />
-    <style>
-      /* Page-specific overrides for the landing page */
-      .landing-hero {
-        height: 60vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        border-bottom: 1px solid var(--border);
-      }
-      
-      .landing-title {
-        font-size: 5rem;
-        font-weight: 900;
-        letter-spacing: -0.05em;
-        text-transform: uppercase;
-        margin-bottom: 1rem;
-      }
-      
-      .landing-desc {
-        color: var(--text-muted);
-        font-size: 1.25rem;
-        max-width: 600px;
-      }
-
-      .selection-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1px;
-        background: var(--border);
-        border: 1px solid var(--border);
-        margin-top: -1px;
-      }
-
-      .selection-item {
-        background: var(--bg-primary);
-        padding: 6rem 2rem;
-        text-align: center;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .selection-item:hover {
-        background: var(--bg-secondary);
-      }
-
-      .selection-item img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        opacity: 0.2;
-        transition: opacity 0.3s ease;
-        z-index: 0;
-      }
-
-      .selection-item:hover img {
-        opacity: 0.4;
-      }
-
-      .selection-content {
-        position: relative;
-        z-index: 1;
-      }
-
-      .selection-name {
-        font-size: 2.5rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-      }
-
-      .selection-tag {
-        font-size: 0.85rem;
-        color: var(--accent-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.2em;
-      }
-
-      @media (max-width: 768px) {
-        .landing-title { font-size: 3rem; }
-        .selection-grid { grid-template-columns: 1fr; }
-        .selection-item { padding: 4rem 1rem; }
-      }
-    </style>
+    <title>watchlean.tv</title>
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <script src="/static/js/poster-fallback.js"></script>
   </head>
   <body>
     <div class="app-container">
-      <div class="landing-hero">
-        <h1 class="landing-title">WatchClean</h1>
-        <p class="landing-desc">A simple, clean interface for your favorite movies and shows.</p>
-      </div>
-
-      <div class="selection-grid">
-        <a href="/movies" class="selection-item">
-          <img src="/images/movies.jpg" alt="Movies" />
-          <div class="selection-content">
-            <div class="selection-tag">Collection</div>
-            <div class="selection-name">Movies</div>
-          </div>
+      <header class="landing-topbar">
+        <a href="/" class="logo">
+          <div class="logo-icon"></div>
+          <span class="logo-text">watchlean.tv</span>
         </a>
+        <nav class="landing-toplinks" aria-label="Main">
+          <a href="/movies">Movies</a>
+          <a href="/shows">TV shows</a>
+        </nav>
+      </header>
 
-        <a href="/shows" class="selection-item">
-          <img src="/images/movie.jpg" alt="Shows" />
-          <div class="selection-content">
-            <div class="selection-tag">Library</div>
-            <div class="selection-name">TV Shows</div>
+      <main class="landing-discovery">
+        <section class="landing-intro" aria-labelledby="landing-title">
+          <span class="landing-badge">Tonight's vault · 100 random picks</span>
+          <h1 id="landing-title" class="landing-title">Find something worth watching.</h1>
+          <p class="landing-desc">
+            Search across movies and TV shows from one place, or let the vault surprise you with a fresh mixed shelf.
+          </p>
+
+          <div class="landing-search-panel">
+            <div class="landing-searchbar">
+              <input
+                id="landingSearch"
+                class="landing-search-input"
+                type="search"
+                placeholder="Search movies and TV shows..."
+                autocomplete="off"
+              />
+              <span class="landing-search-icon">⌕</span>
+            </div>
+            <div class="landing-filter-tabs" role="tablist" aria-label="Content filter">
+              <button class="landing-filter is-active" data-filter="all" type="button">All</button>
+              <button class="landing-filter" data-filter="movie" type="button">Movies</button>
+              <button class="landing-filter" data-filter="show" type="button">TV shows</button>
+            </div>
           </div>
-        </a>
-      </div>
-      
-      <div class="status-bar">
-        <div class="status-item">
-          <div class="status-dot"></div>
-          <span>v1.0.0</span>
+        </section>
+
+        <section class="landing-shelf" aria-labelledby="shelf-title">
+          <div class="landing-shelf-head">
+            <div>
+              <span class="page-kicker">Discovery shelf</span>
+              <h2 id="shelf-title" class="landing-section-title">Random movies &amp; shows</h2>
+            </div>
+            <button id="shuffleLanding" class="pill pill--gold" type="button">Shuffle 100</button>
+          </div>
+
+          <div id="landingGrid" class="landing-grid">
+            <div class="loading">Loading the vault...</div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="footer-inner">
+          <div>
+            <div class="footer-brand">watchlean.tv</div>
+            <p>Every frame tells a story.</p>
+          </div>
+          <nav class="footer-links" aria-label="Footer">
+            <a href="/movies">Movies</a>
+            <a href="/shows">TV shows</a>
+          </nav>
         </div>
-        <div class="status-item">
-          <span>Ready</span>
-        </div>
-      </div>
+      </footer>
     </div>
+    <script src="/static/js/landing.js" defer></script>
   </body>
 </html>

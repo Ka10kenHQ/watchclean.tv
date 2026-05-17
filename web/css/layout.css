@@ -1,0 +1,163 @@
+/* —— Sticky header —— */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.875rem clamp(1rem, 4vw, 1.75rem);
+}
+
+.header-content {
+  max-width: var(--container-wide);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+}
+
+.header-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* —— Status strip —— */
+.status-bar {
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.5rem clamp(1rem, 4vw, 1.75rem);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1.25rem 2rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.25);
+}
+
+/* —— Main column —— */
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: var(--container-wide);
+  margin: 0 auto;
+  padding: var(--space-section) clamp(1rem, 4vw, 1.75rem) 3rem;
+}
+
+/* —— Listing grid —— */
+.movies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .movies-grid {
+    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* —— Pagination bands —— */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.pagination-top {
+  margin-bottom: 1.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.pagination-bottom {
+  margin-top: 2.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.page-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 40px;
+}
+
+/* —— Detail layout —— */
+.detail-container {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.detail-header {
+  margin-bottom: 1.5rem;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 2.5rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+}
+
+.detail-content {
+  display: grid;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .detail-content {
+    grid-template-columns: minmax(220px, 300px) 1fr;
+    gap: 2.5rem;
+  }
+}
+
+.poster-section {
+  justify-self: center;
+}
+
+@media (min-width: 900px) {
+  .poster-section {
+    justify-self: stretch;
+  }
+}

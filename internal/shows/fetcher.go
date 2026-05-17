@@ -12,6 +12,7 @@ import (
 
 	"github.com/Ka10kenHQ/watchclean.tv/internal/common"
 	"github.com/Ka10kenHQ/watchclean.tv/internal/models"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/vidking"
 )
 
 type Show = models.Show
@@ -138,8 +139,6 @@ func fetchPage(page int) (*VidsrcShowResponse, error) {
 func parseFromAPI(item VidsrcShowItem) Show {
 	year := common.ExtractYear(item.Title)
 	cleanTitle := common.RemoveYearFromTitle(item.Title)
-	embedURL := common.ConvertToNewEmbedURL(item.EmbedURL)
-
 	tmdbID := ""
 	if item.TmdbID != nil {
 		tmdbID = *item.TmdbID
@@ -155,6 +154,12 @@ func parseFromAPI(item VidsrcShowItem) Show {
 		imgURL = fmt.Sprintf("https://image.tmdb.org/t/p/w500/%s.jpg", tmdbID)
 	}
 
+	videoURL := ""
+	if tmdbID != "" {
+		opts := vidking.EmbedOptions{NextEpisode: true, EpisodeSelector: true}
+		videoURL = vidking.TVEmbedURL(tmdbID, vidking.DefaultTVSeason, vidking.DefaultTVEpisode, opts)
+	}
+
 	return Show{
 		Title:        cleanTitle,
 		TitleEnglish: cleanTitle,
@@ -162,7 +167,7 @@ func parseFromAPI(item VidsrcShowItem) Show {
 		ImdbID:       item.ImdbID,
 		TmdbID:       tmdbID,
 		Image:        imgURL,
-		VideoURL:     embedURL,
+		VideoURL:     videoURL,
 	}
 }
 

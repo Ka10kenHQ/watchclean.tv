@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/Ka10kenHQ/watchclean.tv/internal/models"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/vidking"
 	"github.com/gin-gonic/gin"
 )
 
@@ -107,7 +108,7 @@ func ShowMovieByTmdbID(c *gin.Context) {
 		ImdbID:       tmdbMovie.ImdbID,
 		TmdbID:       tmdbID,
 		Image:        fmt.Sprintf("https://image.tmdb.org/t/p/w500%s", tmdbMovie.PosterPath),
-		VideoURL:     fmt.Sprintf("https://vidsrc-embed.ru/embed/movie/%s", tmdbMovie.ImdbID),
+		VideoURL:     vidking.MovieEmbedURL(tmdbID, vidking.EmbedOptions{}),
 	}
 
 	if err := models.InsertMovie(newMovie); err != nil {

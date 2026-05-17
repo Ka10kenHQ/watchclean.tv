@@ -1,0 +1,72 @@
+/**
+ * Design tokens — cinematic premium OTT theme.
+ * Edit here to retheme the whole app.
+ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800;900&display=swap');
+
+:root {
+  /* Canvas */
+  --color-canvas: #07070b;
+  --color-canvas-subtle: #0d0d14;
+  --color-surface: rgba(20, 20, 28, 0.78);
+  --color-surface-muted: rgba(240, 237, 232, 0.055);
+  --color-overlay: rgba(240, 237, 232, 0.08);
+
+  /* Text */
+  --color-text: #f0ede8;
+  --color-text-secondary: #c5beb5;
+  --color-text-muted: #867f78;
+
+  /* Accent */
+  --color-accent: #c0272d;
+  --color-accent-hover: #e13a42;
+  --color-accent-muted: rgba(192, 39, 45, 0.16);
+  --color-accent-border: rgba(192, 39, 45, 0.48);
+  --color-gold: #d4af37;
+  --color-gold-soft: #f0d778;
+  --color-gold-muted: rgba(212, 175, 55, 0.14);
+
+  /* Semantic */
+  --color-success: #64d18a;
+  --color-warning: #d4af37;
+
+  /* Borders & shadows */
+  --color-border: rgba(240, 237, 232, 0.11);
+  --color-border-strong: rgba(212, 175, 55, 0.34);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 24px 60px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 34px 90px rgba(0, 0, 0, 0.58);
+  --shadow-glow: 0 0 56px rgba(192, 39, 45, 0.24);
+
+  /* Radii */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 34px;
+  --radius-pill: 9999px;
+
+  /* Typography */
+  --font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.25rem;
+  --text-2xl: clamp(1.75rem, 4vw, 2.5rem);
+  --text-hero: clamp(3.1rem, 9vw, 6.5rem);
+  --leading-tight: 1.2;
+  --leading-normal: 1.55;
+
+  /* Layout */
+  --container-wide: 1400px;
+  --container-text: 720px;
+  --header-height: auto;
+  --space-section: clamp(2rem, 5vw, 3.5rem);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 220ms;
+}

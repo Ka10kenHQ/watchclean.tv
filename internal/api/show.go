@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/Ka10kenHQ/watchclean.tv/internal/models"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/vidking"
 	"github.com/gin-gonic/gin"
 )
 
@@ -98,6 +99,7 @@ func ShowShowByTmdbID(c *gin.Context) {
 		year = tmdbShow.FirstAir[:4]
 	}
 
+	tvOpts := vidking.EmbedOptions{NextEpisode: true, EpisodeSelector: true}
 	newShow := models.Show{
 		Title:        tmdbShow.Name,
 		TitleEnglish: tmdbShow.Name,
@@ -105,7 +107,7 @@ func ShowShowByTmdbID(c *gin.Context) {
 		ImdbID:       imdbID,
 		TmdbID:       tmdbID,
 		Image:        fmt.Sprintf("https://image.tmdb.org/t/p/w500%s", tmdbShow.PosterPath),
-		VideoURL:     fmt.Sprintf("https://vidsrc-embed.ru/embed/tv/%s", imdbID),
+		VideoURL:     vidking.TVEmbedURL(tmdbID, vidking.DefaultTVSeason, vidking.DefaultTVEpisode, tvOpts),
 	}
 
 	if err := models.InsertShow(newShow); err != nil {

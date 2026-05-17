@@ -3,39 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ .Title }} - WatchClean</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <title>{{ .Title }} - watchlean.tv</title>
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <script src="/static/js/poster-fallback.js"></script>
   </head>
   <body>
     <div class="app-container">
       <header class="header">
         <div class="header-content">
-          <a href="/" class="logo">
-            <div class="logo-icon"></div>
-            <span class="logo-text">WatchClean</span>
-          </a>
+          <div class="header-nav">
+            <a href="/" class="logo">
+              <div class="logo-icon"></div>
+              <span class="logo-text">watchlean.tv</span>
+            </a>
+            <a href="/movies" class="nav-link nav-link--active">Movies</a>
+            <a href="/shows" class="nav-link">TV shows</a>
+            <a href="/" class="nav-link">Home</a>
+          </div>
           <div class="search-container">
             <div class="search-bar">
               <input
                 type="text"
                 id="searchInput"
                 class="search-input"
-                placeholder="Search..."
+                placeholder="Search movies..."
                 autocomplete="off"
               />
+              <button id="searchClear" class="search-clear">✕</button>
               <div class="search-icon">🔍</div>
             </div>
+            <div id="searchResults" class="search-results"></div>
           </div>
         </div>
       </header>
 
       <main class="main-content">
         <div class="detail-container">
-          <div class="detail-header">
+          <a href="/movies" class="detail-back">← Back to movies</a>
+          <div class="detail-header page-hero detail-hero">
+            <span class="page-kicker">Feature presentation</span>
             <h1 class="detail-title">{{ .Title }}</h1>
-            {{ if .TitleEnglish }}
-            <p class="detail-subtitle">{{ .TitleEnglish }}</p>
+            {{ if .EnglishTitle }}
+            <p class="detail-subtitle">{{ .EnglishTitle }}</p>
             {{ end }}
+            <div class="page-actions">
+              <span class="pill pill--gold">Movie</span>
+              <span class="pill">{{ .Year }}</span>
+              <span class="pill">HD stream</span>
+            </div>
           </div>
 
           <div class="detail-meta">
@@ -49,29 +64,43 @@
             </div>
             <div class="meta-item">
               <span class="meta-label">Status</span>
-              <span class="meta-value" style="color: var(--success)">Online</span>
+              <span class="meta-value" style="color: var(--color-success)">Available</span>
             </div>
           </div>
 
           <div class="detail-content">
             <div class="poster-section">
-              <img src="{{ .Image }}" alt="{{ .Title }}" class="detail-poster" onerror="this.src='/images/movies.jpg'" />
+              <img src="{{ .Image }}" alt="{{ .Title }}" class="detail-poster" width="300" height="450" onerror="watchcleanPosterFallback(this,'/images/movies.jpg')" />
             </div>
 
             <div class="video-section">
               {{ if .VideoURL }}
+              <p class="video-label">Now playing</p>
               <div class="video-player">
-                <iframe src="{{ .VideoURL }}" allowfullscreen></iframe>
+                <iframe src="{{ .VideoURL }}" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
               </div>
               {{ else }}
-              <div class="loading" style="border: 1px solid var(--border); background: var(--bg-secondary);">
-                Video stream currently unavailable
-              </div>
+              <p class="video-label">Player</p>
+              <div class="unavailable-card">This title does not have a stream link yet.</div>
               {{ end }}
             </div>
           </div>
         </div>
       </main>
+      <footer class="footer">
+        <div class="footer-inner">
+          <div>
+            <div class="footer-brand">watchlean.tv</div>
+            <p>Every frame tells a story.</p>
+          </div>
+          <nav class="footer-links" aria-label="Footer">
+            <a href="/">Home</a>
+            <a href="/movies">Movies</a>
+            <a href="/shows">TV shows</a>
+          </nav>
+        </div>
+      </footer>
     </div>
+    <script src="/static/js/header-search.js" data-search-type="movie" defer></script>
   </body>
 </html>

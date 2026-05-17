@@ -12,6 +12,7 @@ import (
 
 	"github.com/Ka10kenHQ/watchclean.tv/internal/common"
 	"github.com/Ka10kenHQ/watchclean.tv/internal/models"
+	"github.com/Ka10kenHQ/watchclean.tv/internal/vidking"
 )
 
 type Movie = models.Movie
@@ -135,7 +136,7 @@ func fetchPage(page int) (*VidsrcMovieResponse, error) {
 func parseFromAPI(item VidsrcMovieItem) Movie {
 	year := common.ExtractYear(item.Title)
 	cleanTitle := common.RemoveYearFromTitle(item.Title)
-	embedURL := common.ConvertToNewEmbedURL(item.EmbedURL)
+	videoURL := vidking.MovieEmbedURL(item.TmdbID, vidking.EmbedOptions{})
 
 	imgURL := ""
 	tmdbKey := os.Getenv("TMDB_API_KEY")
@@ -154,7 +155,7 @@ func parseFromAPI(item VidsrcMovieItem) Movie {
 		ImdbID:       item.ImdbID,
 		TmdbID:       item.TmdbID,
 		Image:        imgURL,
-		VideoURL:     embedURL,
+		VideoURL:     videoURL,
 		Quality:      item.Quality,
 	}
 }
